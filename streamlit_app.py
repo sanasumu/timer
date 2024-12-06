@@ -2,20 +2,41 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import pandas as pd
 from datetime import datetime, timedelta
+import time
 import math
 import openai
 
 # OpenAI APIキー設定
-openai.api_key = st.secrets["API_kEY"]  # 自分のAPIキーを設定してください
+openai.api_key=  st.secrets[API_kEY] # 自分のAPIキーを設定してください
 
 # タイトル
-st.title("マルチタスク課題タイマー")
+st.title("タイマー付きマルチタスク課題管理アプリ")
 
 # セッション状態の初期化
 if "tasks" not in st.session_state:
     st.session_state.tasks = []
+if "timer_running" not in st.session_state:
+    st.session_state.timer_running = False
+if "elapsed_time" not in st.session_state:
+    st.session_state.elapsed_time = 0
 
-# 新しい課題の追加
+# タイマーの状態管理
+def start_timer():
+    st.session_state.timer_running = True
+
+def stop_timer():
+    st.session_state.timer_running = False
+
+def reset_timer():
+    st.session_state.timer_running = False
+    st.session_state.elapsed_time = 0
+
+# タイマーの更新
+if st.session_state.timer_running:
+    st.session_state.elapsed_time += 1
+    time.sleep(1)
+
+# サイドバーで課題の追加
 st.sidebar.header("新しい課題を追加")
 task_name = st.sidebar.text_input("課題名")
 deadline = st.sidebar.date_input("締め切り日", min_value=datetime.now().date())
@@ -29,11 +50,6 @@ if st.sidebar.button("課題を追加"):
         "remaining_pages": total_pages
     })
     st.sidebar.success("課題を追加しました！")
-
-# 締め切りが過ぎた課題の自動管理
-st.session_state.tasks = [
-    task for task in st.session_state.tasks if task["remaining_pages"] > 0 and task["deadline"] >= datetime.now().date()
-]
 
 # タスク一覧の表示と管理
 st.header("課題の進捗管理")
@@ -85,6 +101,22 @@ if progress_data:
     ax.set_ylabel("進捗率")
     ax.set_ylim(0, 100)
     st.pyplot(fig)
+
+# タイマーの表示と操作
+st.header("タイマー")
+timer_minutes, timer_seconds = divmod(st.session_state.elapsed_time, 60)
+st.write(f"経過時間: {timer_minutes:02d}:{timer_seconds:02d}")
+
+col1, col2, col3 = st.columns(3)
+with col1:
+    if st.button("Start"):
+        start_timer()
+with col2:
+    if st.button("Stop"):
+        stop_timer()
+with col3:
+    if st.button("Reset"):
+        reset_timer()
 
 # アナログ時計の描画
 st.header("現在の時刻（アナログ時計）")
