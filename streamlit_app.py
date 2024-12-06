@@ -7,7 +7,7 @@ import math
 import openai
 
 # OpenAI APIキー設定
-openai.api_key=  st.secrets[API_kEY] # 自分のAPIキーを設定してください
+openai.api_key=  st.secrets["API_kEY"] # 自分のAPIキーを設定してください
 
 # タイトル
 st.title("タイマー付きマルチタスク課題管理アプリ")
