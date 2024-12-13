@@ -7,7 +7,7 @@ import time
 # アプリのタイトル
 st.title("リアルタイムアナログ時計")
 
-# アナログ時計の描画関数
+# アナログ時計を描画する関数
 def draw_clock():
     now = datetime.now()
     hour, minute, second = now.hour % 12, now.minute, now.second
@@ -36,7 +36,7 @@ def draw_clock():
     ax.plot([0, minute_length * math.cos(minute_angle)], [0, minute_length * math.sin(minute_angle)], color="blue", lw=4)
     ax.plot([0, second_length * math.cos(second_angle)], [0, second_length * math.sin(second_angle)], color="red", lw=2)
 
-    # 時刻の数字
+    # 時間の数字
     for i in range(12):
         angle = math.radians(i * 30 - 90)
         x, y = math.cos(angle), math.sin(angle)
@@ -44,7 +44,7 @@ def draw_clock():
 
     return fig
 
-# ストップ用のフラグをセッションステートに保存
+# セッションステートで動作状態を管理
 if "running" not in st.session_state:
     st.session_state.running = False
 
@@ -56,11 +56,12 @@ if st.button("スタート"):
 if st.button("ストップ"):
     st.session_state.running = False
 
-# アナログ時計のリアルタイム更新
+# 時計の表示領域
 clock_placeholder = st.empty()
 
+# タイマーの更新
 while st.session_state.running:
     with clock_placeholder.container():
         fig = draw_clock()
         st.pyplot(fig)
-        time.sleep(1)  # 1秒ごとに更新
+    time.sleep(1)
