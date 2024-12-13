@@ -6,8 +6,8 @@ import time
 import math
 import openai
 
-# OpenAI APIキー設定（自身のキーを入力してください）
-openai.api_key = st.secrets ["API_KEY"]
+# OpenAI APIキー設定
+openai.api_key = "your-openai-api-key"  # 自分のAPIキーを設定してください
 
 # タイトル
 st.title("タイマー付きマルチタスク課題管理アプリ")
@@ -31,6 +31,11 @@ def reset_timer():
     st.session_state.timer_running = False
     st.session_state.elapsed_time = 0
 
+# タイマーの更新
+if st.session_state.timer_running:
+    st.session_state.elapsed_time += 1
+    time.sleep(1)
+
 # サイドバーで課題の追加
 st.sidebar.header("新しい課題を追加")
 task_name = st.sidebar.text_input("課題名")
@@ -46,32 +51,12 @@ if st.sidebar.button("課題を追加"):
     })
     st.sidebar.success("課題を追加しました！")
 
-# タイマーの表示と更新
-st.header("タイマー")
-if st.session_state.timer_running:
-    st.session_state.elapsed_time += 1
-    time.sleep(1)
-
-timer_minutes, timer_seconds = divmod(st.session_state.elapsed_time, 60)
-st.write(f"経過時間: {timer_minutes:02d}:{timer_seconds:02d}")
-
-col1, col2, col3 = st.columns(3)
-with col1:
-    if st.button("Start"):
-        start_timer()
-with col2:
-    if st.button("Stop"):
-        stop_timer()
-with col3:
-    if st.button("Reset"):
-        reset_timer()
-
-# 課題一覧の表示
+# タスク一覧の表示と管理
 st.header("課題の進捗管理")
 progress_data = []
 for i, task in enumerate(st.session_state.tasks):
     days_remaining = (task["deadline"] - datetime.now().date()).days
-    pages_per_day = math.ceil(task["total_pages"] / max(days_remaining, 1))
+    pages_per_day = math.ceil(task["total_pages"] / days_remaining) if days_remaining > 0 else task["remaining_pages"]
 
     st.subheader(f"課題 {i+1}: {task['name']}")
     st.write(f"締め切りまで: **{days_remaining}日**")
@@ -79,7 +64,7 @@ for i, task in enumerate(st.session_state.tasks):
     st.write(f"残りページ数: **{task['remaining_pages']}ページ**")
 
     # ページ完了ボタン
-    if st.button(f"{task['name']}の1ページ完了"):
+    if st.button(f"ページ完了！ ({task['name']})"):
         if task["remaining_pages"] > 0:
             task["remaining_pages"] -= 1
             st.success(f"{task['name']}の残りページ数: {task['remaining_pages']}ページ")
@@ -117,7 +102,23 @@ if progress_data:
     ax.set_ylim(0, 100)
     st.pyplot(fig)
 
-# アナログ時計の表示
+# タイマーの表示と操作
+st.header("タイマー")
+timer_minutes, timer_seconds = divmod(st.session_state.elapsed_time, 60)
+st.write(f"経過時間: {timer_minutes:02d}:{timer_seconds:02d}")
+
+col1, col2, col3 = st.columns(3)
+with col1:
+    if st.button("Start"):
+        start_timer()
+with col2:
+    if st.button("Stop"):
+        stop_timer()
+with col3:
+    if st.button("Reset"):
+        reset_timer()
+
+# アナログ時計の描画
 st.header("現在の時刻（アナログ時計）")
 
 def draw_clock():
