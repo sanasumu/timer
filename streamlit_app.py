@@ -3,9 +3,10 @@ from datetime import datetime, timedelta
 import math
 import matplotlib.pyplot as plt
 import openai
+import time
 
-# OpenAI APIキーを設定
-openai.api_key = "YOUR_OPENAI_API_KEY"  # 必要に応じて環境変数を利用
+# OpenAI APIキーを設定（必要に応じて設定）
+openai.api_key = "YOUR_OPENAI_API_KEY"
 
 # アプリのタイトル
 st.title("課題タイマーアプリ with 勉強アドバイス")
@@ -14,6 +15,12 @@ st.sidebar.header("課題の入力フォーム")
 # 課題管理用セッションの初期化
 if "tasks" not in st.session_state:
     st.session_state.tasks = []
+
+# タイマー管理用セッションの初期化
+if "timer_running" not in st.session_state:
+    st.session_state.timer_running = False
+if "start_time" not in st.session_state:
+    st.session_state.start_time = None
 
 # 課題の入力フォーム
 with st.sidebar.form(key="task_form"):
@@ -66,6 +73,28 @@ if st.session_state.tasks:
 else:
     st.write("現在、管理中の課題はありません。")
 
+# タイマー開始と停止
+if st.button("タイマー開始"):
+    st.session_state.start_time = datetime.now()
+    st.session_state.timer_running = True
+    st.write(f"タイマーが開始されました: {st.session_state.start_time}")
+
+if st.button("タイマー停止"):
+    st.session_state.timer_running = False
+    st.write("タイマーが停止しました。")
+
+# タイマーが動いている場合、残り時間を表示
+if st.session_state.timer_running and st.session_state.start_time:
+    time_elapsed = datetime.now() - st.session_state.start_time
+    remaining_time = timedelta(minutes=25) - time_elapsed  # 25分のタイマーに設定
+
+    # タイマーが終了した場合
+    if remaining_time.total_seconds() <= 0:
+        st.session_state.timer_running = False
+        st.success("タイマー終了！ 勉強の休憩時間です！")
+    else:
+        st.write(f"残り時間: {str(remaining_time).split('.')[0]}")
+
 # アナログ時計の表示
 st.header("アナログ時計")
 
@@ -112,4 +141,3 @@ def draw_clock():
 
 # 時計の描画
 st.pyplot(draw_clock())
-
