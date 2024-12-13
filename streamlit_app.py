@@ -3,10 +3,9 @@ from datetime import datetime, timedelta
 import math
 import matplotlib.pyplot as plt
 import openai
-import time
 
 # OpenAI APIキーを設定（必要に応じて設定）
-openai.api_key = "YOUR_OPENAI_API_KEY"
+openai.api_key = "YOUR_OPENAI_API_KEY"  # OpenAIのAPIキーを設定
 
 # アプリのタイトル
 st.title("課題タイマーアプリ with 勉強アドバイス")
