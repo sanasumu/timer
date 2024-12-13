@@ -51,7 +51,14 @@ if "reset" not in st.session_state:
 # タイトル
 st.title("リアルタイムアナログ時計")
 
-# ボタン
+# 時計の描画領域
+clock_placeholder = st.empty()
+
+# 時計を描画
+fig = draw_clock()
+clock_placeholder.pyplot(fig)
+
+# ボタンを時計の下に追加
 start_button = st.button("スタート")
 stop_button = st.button("ストップ")
 reset_button = st.button("リセット")
@@ -60,25 +67,13 @@ reset_button = st.button("リセット")
 if start_button:
     st.session_state.running = True
     st.session_state.reset = False
+    st.success("タイマーをスタートしました！")
 
 if stop_button:
     st.session_state.running = False
+    st.warning("タイマーを停止しました！")
 
 if reset_button:
     st.session_state.running = False
     st.session_state.reset = True
-
-# 時計の描画領域
-clock_placeholder = st.empty()
-
-# タイマーの描画
-if st.session_state.reset:
-    clock_placeholder.write("リセットされました。タイマーを再スタートしてください。")
-elif st.session_state.running:
-    while st.session_state.running:
-        with clock_placeholder.container():
-            fig = draw_clock()
-            st.pyplot(fig)
-        time.sleep(1)
-else:
-    clock_placeholder.write("タイマーは停止中です。")
+    st.info("タイマーをリセットしました！")
