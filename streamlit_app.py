@@ -45,31 +45,40 @@ def draw_clock():
 if "running" not in st.session_state:
     st.session_state.running = False
 
-# UI
+if "reset" not in st.session_state:
+    st.session_state.reset = False
+
+# タイトル
 st.title("リアルタイムアナログ時計")
 
-col1, col2 = st.columns(2)
+# ボタン
+col1, col2, col3 = st.columns(3)
 
 # スタートボタン
 if col1.button("スタート"):
     st.session_state.running = True
+    st.session_state.reset = False
 
 # ストップボタン
 if col2.button("ストップ"):
     st.session_state.running = False
 
+# リセットボタン
+if col3.button("リセット"):
+    st.session_state.running = False
+    st.session_state.reset = True
+
 # 時計の描画領域
 clock_placeholder = st.empty()
 
-# タイマーの更新処理
-while True:
-    if st.session_state.running:
+# タイマーの描画
+if st.session_state.reset:
+    clock_placeholder.write("リセットされました。タイマーを再スタートしてください。")
+elif st.session_state.running:
+    while st.session_state.running:
         with clock_placeholder.container():
             fig = draw_clock()
             st.pyplot(fig)
         time.sleep(1)
-    else:
-        # 停止中は空の状態を表示
-        with clock_placeholder.container():
-            st.write("タイマーは停止中です。")
-        time.sleep(0.1)
+else:
+    clock_placeholder.write("タイマーは停止中です。")
