@@ -1,8 +1,6 @@
 import streamlit as st
 import matplotlib.pyplot as plt
-import pandas as pd
 from datetime import datetime, timedelta
-import time
 import math
 import openai
 
@@ -10,33 +8,13 @@ import openai
 openai.api_key = "your-openai-api-key"  # 自分のAPIキーを設定してください
 
 # タイトル
-st.title("タイマー付きマルチタスク課題管理アプリ")
+st.title("マルチタスク課題タイマー")
 
 # セッション状態の初期化
 if "tasks" not in st.session_state:
     st.session_state.tasks = []
-if "timer_running" not in st.session_state:
-    st.session_state.timer_running = False
-if "elapsed_time" not in st.session_state:
-    st.session_state.elapsed_time = 0
 
-# タイマーの状態管理
-def start_timer():
-    st.session_state.timer_running = True
-
-def stop_timer():
-    st.session_state.timer_running = False
-
-def reset_timer():
-    st.session_state.timer_running = False
-    st.session_state.elapsed_time = 0
-
-# タイマーの更新
-if st.session_state.timer_running:
-    st.session_state.elapsed_time += 1
-    time.sleep(1)
-
-# サイドバーで課題の追加
+# 新しい課題の追加
 st.sidebar.header("新しい課題を追加")
 task_name = st.sidebar.text_input("課題名")
 deadline = st.sidebar.date_input("締め切り日", min_value=datetime.now().date())
@@ -53,7 +31,6 @@ if st.sidebar.button("課題を追加"):
 
 # タスク一覧の表示と管理
 st.header("課題の進捗管理")
-progress_data = []
 for i, task in enumerate(st.session_state.tasks):
     days_remaining = (task["deadline"] - datetime.now().date()).days
     pages_per_day = math.ceil(task["total_pages"] / days_remaining) if days_remaining > 0 else task["remaining_pages"]
@@ -79,44 +56,6 @@ for i, task in enumerate(st.session_state.tasks):
             max_tokens=100
         )
         st.info(response.choices[0].text.strip())
-
-    # 課題削除ボタン
-    if st.button(f"{task['name']}を削除"):
-        st.session_state.tasks.pop(i)
-        st.warning(f"{task['name']}を削除しました！")
-
-    # 進捗データの収集
-    progress_data.append({
-        "課題名": task["name"],
-        "進捗率": 100 - (task["remaining_pages"] / task["total_pages"] * 100)
-    })
-
-# 進捗グラフの表示
-if progress_data:
-    st.header("進捗状況")
-    progress_df = pd.DataFrame(progress_data)
-    fig, ax = plt.subplots(figsize=(6, 4))
-    ax.bar(progress_df["課題名"], progress_df["進捗率"], color="skyblue")
-    ax.set_title("進捗率 (%)")
-    ax.set_ylabel("進捗率")
-    ax.set_ylim(0, 100)
-    st.pyplot(fig)
-
-# タイマーの表示と操作
-st.header("タイマー")
-timer_minutes, timer_seconds = divmod(st.session_state.elapsed_time, 60)
-st.write(f"経過時間: {timer_minutes:02d}:{timer_seconds:02d}")
-
-col1, col2, col3 = st.columns(3)
-with col1:
-    if st.button("Start"):
-        start_timer()
-with col2:
-    if st.button("Stop"):
-        stop_timer()
-with col3:
-    if st.button("Reset"):
-        reset_timer()
 
 # アナログ時計の描画
 st.header("現在の時刻（アナログ時計）")
