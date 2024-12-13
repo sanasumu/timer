@@ -4,9 +4,6 @@ import math
 import matplotlib.pyplot as plt
 import time
 
-# アプリのタイトル
-st.title("リアルタイムアナログ時計")
-
 # アナログ時計を描画する関数
 def draw_clock():
     now = datetime.now()
@@ -36,7 +33,7 @@ def draw_clock():
     ax.plot([0, minute_length * math.cos(minute_angle)], [0, minute_length * math.sin(minute_angle)], color="blue", lw=4)
     ax.plot([0, second_length * math.cos(second_angle)], [0, second_length * math.sin(second_angle)], color="red", lw=2)
 
-    # 時間の数字
+    # 時刻の数字
     for i in range(12):
         angle = math.radians(i * 30 - 90)
         x, y = math.cos(angle), math.sin(angle)
@@ -44,24 +41,35 @@ def draw_clock():
 
     return fig
 
-# セッションステートで動作状態を管理
+# セッションステートで状態を管理
 if "running" not in st.session_state:
     st.session_state.running = False
 
+# UI
+st.title("リアルタイムアナログ時計")
+
+col1, col2 = st.columns(2)
+
 # スタートボタン
-if st.button("スタート"):
+if col1.button("スタート"):
     st.session_state.running = True
 
 # ストップボタン
-if st.button("ストップ"):
+if col2.button("ストップ"):
     st.session_state.running = False
 
-# 時計の表示領域
+# 時計の描画領域
 clock_placeholder = st.empty()
 
-# タイマーの更新
-while st.session_state.running:
-    with clock_placeholder.container():
-        fig = draw_clock()
-        st.pyplot(fig)
-    time.sleep(1)
+# タイマーの更新処理
+while True:
+    if st.session_state.running:
+        with clock_placeholder.container():
+            fig = draw_clock()
+            st.pyplot(fig)
+        time.sleep(1)
+    else:
+        # 停止中は空の状態を表示
+        with clock_placeholder.container():
+            st.write("タイマーは停止中です。")
+        time.sleep(0.1)
