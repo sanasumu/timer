@@ -1,28 +1,27 @@
 import streamlit as st
-import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 import math
+import matplotlib.pyplot as plt
 import openai
 
-# OpenAI APIキーの設定
-openai.api_key = "your-openai-api-key"
+# OpenAI APIキー（環境変数などで設定することを推奨）
+openai.api_key = "your_openai_api_key"
 
-# アプリケーションタイトル
-st.title("課題管理タイマー Web アプリ")
-st.sidebar.header("課題の詳細を入力してください")
+# アプリのタイトル
+st.title("課題タイマー Web アプリ")
+st.sidebar.header("課題の入力フォーム")
 
-# 課題情報のセッション状態
+# 課題管理用セッションの初期化
 if "tasks" not in st.session_state:
     st.session_state.tasks = []
 
-# 新しい課題の入力
+# 課題の入力フォーム
 with st.sidebar.form(key="task_form"):
-    st.write("新しい課題を追加")
     task_name = st.text_input("課題名")
     deadline = st.date_input("締め切り日", min_value=datetime.now().date())
     total_pages = st.number_input("課題の総ページ数", min_value=1, step=1)
     add_task = st.form_submit_button("課題を追加")
-    
+
     if add_task and task_name:
         st.session_state.tasks.append({
             "name": task_name,
@@ -32,31 +31,53 @@ with st.sidebar.form(key="task_form"):
         })
         st.success(f"課題 '{task_name}' を追加しました！")
 
-# 課題一覧の表示
+# 課題の進行状況の表示
 if st.session_state.tasks:
     st.header("課題の進行状況")
     for task in st.session_state.tasks:
         st.subheader(f"課題: {task['name']}")
+        
+        # 締め切りまでの日数計算
         days_remaining = (task["deadline"] - datetime.now().date()).days
         if days_remaining > 0:
             pages_per_day = math.ceil(task["total_pages"] / days_remaining)
         else:
-            pages_per_day = 0
-        
+            pages_per_day = task["remaining_pages"]
+
         st.write(f"締め切りまでの残り日数: **{days_remaining}日**")
         st.write(f"1日あたりの目標ページ数: **{pages_per_day}ページ**")
         st.write(f"現在の残りページ数: **{task['remaining_pages']}ページ**")
         
         # ページ完了ボタン
-        if st.button(f"{task['name']} - ページ完了！", key=task["name"]):
+        if st.button(f"{task['name']} - ページ完了", key=task["name"]):
             if task["remaining_pages"] > 0:
                 task["remaining_pages"] -= 1
                 st.success(f"残りページ数: {task['remaining_pages']}ページ")
             if task["remaining_pages"] == 0:
                 st.success(f"課題 '{task['name']}' を完了しました！")
 
-# アナログ時計の描画
+# OpenAIを使用した勉強コメントの生成
+if st.button("勉強アドバイスを取得"):
+    task_summaries = "\n".join([f"- {task['name']} (残り {task['remaining_pages']} ページ, 締め切り {task['deadline']})" for task in st.session_state.tasks])
+    prompt = f"""
+    以下の課題を考慮して、勉強のアドバイスを提供してください：
+    {task_summaries}
+    """
+    try:
+        response = openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=prompt,
+            max_tokens=150,
+            temperature=0.7
+        )
+        advice = response.choices[0].text.strip()
+        st.info(f"OpenAIからのアドバイス: {advice}")
+    except Exception as e:
+        st.error(f"OpenAI APIエラー: {e}")
+
+# アナログ時計の表示
 st.header("アナログ時計")
+
 def draw_clock():
     now = datetime.now()
     hour, minute, second = now.hour % 12, now.minute, now.second
@@ -100,18 +121,3 @@ def draw_clock():
 
 # 時計の描画
 st.pyplot(draw_clock())
-
-# OpenAIを使った学習アドバイス
-st.header("OpenAIによる学習アドバイス")
-if st.session_state.tasks:
-    for task in st.session_state.tasks:
-        if task["remaining_pages"] > 0:
-            prompt = f"学生が課題「{task['name']}」を取り組んでいます。{task['remaining_pages']}ページ残っています。" \
-                     f"効率よく進めるためのアドバイスを教えてください。"
-            response = openai.Completion.create(
-                engine="text-davinci-003",
-                prompt=prompt,
-                max_tokens=100
-            )
-            st.subheader(f"{task['name']} のアドバイス:")
-            st.write(response.choices[0].text.strip())
